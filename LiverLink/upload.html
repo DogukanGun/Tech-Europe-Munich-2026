@@ -169,10 +169,43 @@
     margin-bottom: 14px;
   }
 
+  .urgency-HIGH   { background: #da3633; color: #fff; }
+  .urgency-MEDIUM { background: #d29922; color: #000; }
+  .urgency-LOW    { background: #238636; color: #fff; }
+  /* legacy aliases kept for backward compat */
   .urgency-CRITICAL { background: #da3633; color: #fff; }
-  .urgency-HIGH     { background: #d29922; color: #000; }
   .urgency-MODERATE { background: #1f6feb; color: #fff; }
   .urgency-NORMAL   { background: #238636; color: #fff; }
+
+  .alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(218,54,51,0.15);
+    border: 1px solid #da3633;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #f85149;
+  }
+
+  .trend-table td, .trend-table th { padding: 7px 10px; }
+  .trend-RISING  { color: #f85149; font-weight: 700; }
+  .trend-FALLING { color: #3fb950; font-weight: 700; }
+  .trend-STABLE  { color: #8b949e; }
+
+  .patient-summary-box {
+    background: rgba(31,111,235,0.08);
+    border: 1px solid #1f6feb;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #c9d1d9;
+    margin-bottom: 16px;
+  }
 
   .summary-box {
     background: #0d1117;
@@ -355,20 +388,43 @@
   <h2>🧪 Lab Agent — Report Analysis</h2>
 
   <div id="urgency-badge-wrap"></div>
+  <div id="immediate-alert" style="display:none" class="alert-banner">🚨 Requires Immediate Attention — contact physician now</div>
   <div id="notif-wrap" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
   <div id="alert-msg-wrap" style="font-size:0.82rem;color:#d29922;margin-bottom:14px;"></div>
+
+  <p class="section-title">Clinical Summary (Physician)</p>
   <div class="summary-box" id="summary-text"></div>
+
+  <p class="section-title">Patient Summary</p>
+  <div class="patient-summary-box" id="patient-summary-text"></div>
 
   <p class="section-title">Patient</p>
   <div class="meta-grid" id="meta-grid"></div>
 
   <p class="section-title">Test Results</p>
-  <table id="results-table">
+  <table id="results-table" class="trend-table">
     <thead>
       <tr><th>Test</th><th>Result</th><th>Reference</th><th>Status</th></tr>
     </thead>
     <tbody id="results-body"></tbody>
   </table>
+
+  <div id="trend-section" style="display:none">
+    <p class="section-title">Trend Analysis</p>
+    <table class="trend-table" style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:8px 10px;background:#21262d;color:#8b949e;font-size:0.78rem;text-transform:uppercase;">Biomarker</th>
+          <th style="text-align:left;padding:8px 10px;background:#21262d;color:#8b949e;font-size:0.78rem;text-transform:uppercase;">Current</th>
+          <th style="text-align:left;padding:8px 10px;background:#21262d;color:#8b949e;font-size:0.78rem;text-transform:uppercase;">Prior</th>
+          <th style="text-align:left;padding:8px 10px;background:#21262d;color:#8b949e;font-size:0.78rem;text-transform:uppercase;">Change</th>
+          <th style="text-align:left;padding:8px 10px;background:#21262d;color:#8b949e;font-size:0.78rem;text-transform:uppercase;">Trend</th>
+          <th style="text-align:left;padding:8px 10px;background:#21262d;color:#8b949e;font-size:0.78rem;text-transform:uppercase;">Note</th>
+        </tr>
+      </thead>
+      <tbody id="trend-body"></tbody>
+    </table>
+  </div>
 
   <button class="toggle-raw" onclick="toggleRaw('raw-lab')">{ } Raw Lab JSON</button>
   <div id="raw-lab" style="display:none"><pre id="raw-lab-pre" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;font-size:0.78rem;overflow-x:auto;color:#8b949e;margin-top:8px;"></pre></div>
@@ -595,14 +651,18 @@ function setStatus(msg) {
 
 // ── Lab Agent render ──────────────────────────────────────────────────────────
 function renderLab(d) {
-  const ul = d.urgency_level || 'NORMAL';
+  const ul = d.urgency_level || 'LOW';
   document.getElementById('urgency-badge-wrap').innerHTML =
-    `<span class="urgency-badge urgency-${ul}">⚠ ${ul}</span>`;
+    `<span class="urgency-badge urgency-${ul}" style="margin-bottom:10px;display:inline-block;">⚠ ${ul}</span>`;
+
+  // Immediate attention banner
+  const immediateEl = document.getElementById('immediate-alert');
+  immediateEl.style.display = d.requires_immediate_attention ? 'flex' : 'none';
 
   const notifs = d.notifications || {};
   document.getElementById('notif-wrap').innerHTML = [
-    ['🆕 New Report', notifs.new_report_alert],
-    ['👨‍⚕️ Doctor Notified', notifs.notify_doctor],
+    ['🆕 New Report',       notifs.new_report_alert],
+    ['👨‍⚕️ Doctor Notified',  notifs.notify_doctor],
     ['🔔 Patient Notified', notifs.notify_patient],
   ].map(([label, on]) =>
     `<span class="notif-chip ${on ? 'notif-on' : 'notif-off'}">${label}</span>`
@@ -611,7 +671,11 @@ function renderLab(d) {
   if (notifs.alert_message)
     document.getElementById('alert-msg-wrap').textContent = '📲 ' + notifs.alert_message;
 
-  document.getElementById('summary-text').textContent = d.lab_summary || d.agent_summary || '—';
+  // Dual summaries — fall back to legacy field names
+  document.getElementById('summary-text').textContent =
+    d.doctor_brief || d.lab_summary || d.agent_summary || '—';
+  document.getElementById('patient-summary-text').textContent =
+    d.patient_summary || '—';
 
   const m = d.report_metadata || {};
   document.getElementById('meta-grid').innerHTML = [
@@ -638,6 +702,27 @@ function renderLab(d) {
     </tr>`;
   }).join('');
 
+  // Trend analysis
+  const trends = d.trend_analysis || [];
+  const trendSection = document.getElementById('trend-section');
+  if (trends.length > 0) {
+    document.getElementById('trend-body').innerHTML = trends.map(t => {
+      const sign = t.percent_change > 0 ? '+' : '';
+      const sigFlag = t.is_significant ? ' ⚠' : '';
+      return `<tr>
+        <td style="color:#c9d1d9">${t.biomarker}</td>
+        <td style="color:#c9d1d9">${t.current_value}</td>
+        <td style="color:#8b949e">${t.prior_value} <span style="font-size:0.75rem;color:#8b949e">(${t.prior_date})</span></td>
+        <td class="trend-${t.velocity}">${sign}${t.percent_change}%${sigFlag}</td>
+        <td class="trend-${t.velocity}">${t.velocity}</td>
+        <td style="color:#8b949e;font-size:0.8rem">${t.note}</td>
+      </tr>`;
+    }).join('');
+    trendSection.style.display = 'block';
+  } else {
+    trendSection.style.display = 'none';
+  }
+
   document.getElementById('raw-lab-pre').textContent = JSON.stringify(d, null, 2);
   document.getElementById('result-wrap').style.display = 'block';
   document.getElementById('result-wrap').scrollIntoView({ behavior: 'smooth' });
@@ -645,12 +730,20 @@ function renderLab(d) {
 
 // ── Doctor Agent render ───────────────────────────────────────────────────────
 function renderDoctor(d) {
-  const ul = d.urgency_level || 'NORMAL';
+  const ul = d.urgency_level || 'LOW';
   document.getElementById('doctor-badge-wrap').innerHTML =
-    `<span class="urgency-badge urgency-${ul}">⚠ ${ul}</span>`;
+    `<span class="urgency-badge urgency-${ul}" style="margin-bottom:8px;display:inline-block;">⚠ ${ul}</span>`
+    + (d.requires_immediate_attention
+      ? `<div class="alert-banner" style="margin-bottom:12px;">🚨 Requires Immediate Attention</div>`
+      : '');
 
   document.getElementById('doctor-summary').textContent = d.doctor_summary || '—';
-  document.getElementById('clinical-assessment').textContent = d.clinical_assessment || '—';
+
+  // Show trend_summary if present
+  const tsEl = document.getElementById('clinical-assessment');
+  const trendSummary = d.trend_summary && d.trend_summary !== 'No trend data available'
+    ? `\n\n📈 Trend: ${d.trend_summary}` : '';
+  tsEl.textContent = (d.clinical_assessment || '—') + trendSummary;
 
   document.getElementById('pattern-chip').textContent  = '🔬 ' + (d.injury_pattern || '—');
   document.getElementById('severity-chip').textContent = '📊 ' + (d.severity || '—');
