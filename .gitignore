@@ -1,0 +1,7 @@
+# Local environment files containing sensitive credentials
+.env
+*.env
+my_agent/.env
+
+# macOS system files
+.DS_Store
