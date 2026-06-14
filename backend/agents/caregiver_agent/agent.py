@@ -20,6 +20,8 @@ from caregiver_agent.tools import (
     send_escalation_to_care_team,
     get_cld_care_tip,
     acknowledge_patient_alert,
+    check_hand_ai_and_request_emergency_authorization,
+    get_emergency_authorization_reply,
     check_caregiver_location,
     dispatch_ambulance_via_hitl,
 )
@@ -58,10 +60,10 @@ def opening_briefing(callback_context: CallbackContext) -> Optional[types.Conten
             return types.Content(
                 role="model",
                 parts=[types.Part(text=(
-                    "🚨 **CRITICAL EMERGENCY BRIEFING** 🚨\n\n"
+                    "**CRITICAL EMERGENCY BRIEFING**\n\n"
                     "I'm **Aria**, the LiverLink caregiver companion. "
                     "John's system has logged an urgent symptom warning! "
-                    "We are initiating our emergency care orchestration flow immediately."
+                    "If John is unresponsive or unable to complete the test, please check on him immediately, assist him with the Hand AI Ammonia check-in, and we will initiate our emergency care orchestration flow immediately."
                 ))],
             )
     except Exception as db_err:
@@ -97,6 +99,8 @@ root_agent = Agent(
         send_escalation_to_care_team,
         get_cld_care_tip,
         acknowledge_patient_alert,
+        check_hand_ai_and_request_emergency_authorization,
+        get_emergency_authorization_reply,
         check_caregiver_location,
         dispatch_ambulance_via_hitl,
     ],

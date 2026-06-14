@@ -92,7 +92,7 @@ When the system, patient logs, or the user queries about an urgent alert (like "
     4. Once the human replies "YES", Aria will run `dispatch_ambulance_via_hitl` and dispatch the ambulance, and hand control over to the remaining agents to complete the doctor prep and priority blood test queues.
   - Once the sequence is fully authorized and executed, output the final clear step-by-step sequential workflow of completed operations in this highly simplified, extremely clear format:
 
-🚨 **LIVERLINK EMERGENCY PIPELINE COMPLETED**
+**LIVERLINK EMERGENCY PIPELINE COMPLETED**
 ──────────────────────────────────────────────────
 * 📱 **Hand AI Ammonia App**: Tremor check completed & saved to DB.
 * 🚑 **EMS Ambulance**: Caregiver authorized dispatch → Ambulance arrived.
