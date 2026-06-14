@@ -470,6 +470,12 @@
 </div>
 
 <script>
+// Escape user/AI-controlled values before interpolating into innerHTML.
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 const ADK_BASE   = ''; // proxy: same origin
 const APP_NAME   = 'liverlink_pipeline';
 const USER_ID    = 'liverlink-user';
@@ -662,7 +668,7 @@ function setStatus(msg) {
 function renderLab(d) {
   const ul = d.urgency_level || 'LOW';
   document.getElementById('urgency-badge-wrap').innerHTML =
-    `<span class="urgency-badge urgency-${ul}" style="margin-bottom:10px;display:inline-block;">⚠ ${ul}</span>`;
+    `<span class="urgency-badge urgency-${escapeHTML(ul)}" style="margin-bottom:10px;display:inline-block;">⚠ ${escapeHTML(ul)}</span>`;
 
   // Immediate attention banner
   const immediateEl = document.getElementById('immediate-alert');
@@ -697,17 +703,17 @@ function renderLab(d) {
     ['Physician',   m.referring_physician],
     ['Lab',         m.lab_name],
   ].map(([label, val]) =>
-    `<div class="meta-item"><div class="label">${label}</div><div class="value">${val || '—'}</div></div>`
+    `<div class="meta-item"><div class="label">${escapeHTML(label)}</div><div class="value">${escapeHTML(val) || '—'}</div></div>`
   ).join('');
 
   document.getElementById('results-body').innerHTML = (d.test_results || []).map(t => {
-    const cls = `flag-${t.status}`;
+    const cls = `flag-${escapeHTML(t.status)}`;
     const dot = t.is_flagged ? '🔴' : '🟢';
     return `<tr>
-      <td>${t.name}</td>
-      <td class="${cls}">${t.value} ${t.unit}</td>
-      <td>${t.reference_range}</td>
-      <td class="${cls}">${dot} ${t.status}</td>
+      <td>${escapeHTML(t.name)}</td>
+      <td class="${cls}">${escapeHTML(t.value)} ${escapeHTML(t.unit)}</td>
+      <td>${escapeHTML(t.reference_range)}</td>
+      <td class="${cls}">${dot} ${escapeHTML(t.status)}</td>
     </tr>`;
   }).join('');
 
@@ -719,12 +725,12 @@ function renderLab(d) {
       const sign = t.percent_change > 0 ? '+' : '';
       const sigFlag = t.is_significant ? ' ⚠' : '';
       return `<tr>
-        <td style="color:#c9d1d9">${t.biomarker}</td>
-        <td style="color:#c9d1d9">${t.current_value}</td>
-        <td style="color:#8b949e">${t.prior_value} <span style="font-size:0.75rem;color:#8b949e">(${t.prior_date})</span></td>
-        <td class="trend-${t.velocity}">${sign}${t.percent_change}%${sigFlag}</td>
-        <td class="trend-${t.velocity}">${t.velocity}</td>
-        <td style="color:#8b949e;font-size:0.8rem">${t.note}</td>
+        <td style="color:#c9d1d9">${escapeHTML(t.biomarker)}</td>
+        <td style="color:#c9d1d9">${escapeHTML(t.current_value)}</td>
+        <td style="color:#8b949e">${escapeHTML(t.prior_value)} <span style="font-size:0.75rem;color:#8b949e">(${escapeHTML(t.prior_date)})</span></td>
+        <td class="trend-${escapeHTML(t.velocity)}">${sign}${escapeHTML(t.percent_change)}%${sigFlag}</td>
+        <td class="trend-${escapeHTML(t.velocity)}">${escapeHTML(t.velocity)}</td>
+        <td style="color:#8b949e;font-size:0.8rem">${escapeHTML(t.note)}</td>
       </tr>`;
     }).join('');
     trendSection.style.display = 'block';
@@ -741,7 +747,7 @@ function renderLab(d) {
 function renderDoctor(d) {
   const ul = d.urgency_level || 'LOW';
   document.getElementById('doctor-badge-wrap').innerHTML =
-    `<span class="urgency-badge urgency-${ul}" style="margin-bottom:8px;display:inline-block;">⚠ ${ul}</span>`
+    `<span class="urgency-badge urgency-${escapeHTML(ul)}" style="margin-bottom:8px;display:inline-block;">⚠ ${escapeHTML(ul)}</span>`
     + (d.requires_immediate_attention
       ? `<div class="alert-banner" style="margin-bottom:12px;">Requires Immediate Attention</div>`
       : '');
@@ -758,19 +764,19 @@ function renderDoctor(d) {
   document.getElementById('severity-chip').textContent = '📊 ' + (d.severity || '—');
 
   document.getElementById('differentials-list').innerHTML =
-    (d.differential_considerations || []).map(c => `<li>${c}</li>`).join('');
+    (d.differential_considerations || []).map(c => `<li>${escapeHTML(c)}</li>`).join('');
 
   document.getElementById('doctor-actions-list').innerHTML =
     (d.recommended_actions || []).map(a =>
-      `<li><strong>#${a.priority}</strong> ${a.action}<br><span style="color:#8b949e;font-size:0.8rem">${a.rationale}</span></li>`
+      `<li><strong>#${escapeHTML(a.priority)}</strong> ${escapeHTML(a.action)}<br><span style="color:#8b949e;font-size:0.8rem">${escapeHTML(a.rationale)}</span></li>`
     ).join('');
 
   const fu = d.follow_up || {};
   document.getElementById('followup-wrap').innerHTML = `
     <div class="follow-up" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <span>⏱ <strong>${fu.timeframe || '—'}</strong></span>
-      ${fu.retest_in ? `<span style="font-size:0.82rem;font-weight:400">${fu.retest_in}</span>` : ''}
-      ${(fu.monitoring_parameters||[]).length ? `<span style="font-size:0.82rem;font-weight:400;color:#8b949e">Monitor: ${fu.monitoring_parameters.join(', ')}</span>` : ''}
+      <span>⏱ <strong>${escapeHTML(fu.timeframe) || '—'}</strong></span>
+      ${fu.retest_in ? `<span style="font-size:0.82rem;font-weight:400">${escapeHTML(fu.retest_in)}</span>` : ''}
+      ${(fu.monitoring_parameters||[]).length ? `<span style="font-size:0.82rem;font-weight:400;color:#8b949e">Monitor: ${escapeHTML(fu.monitoring_parameters.join(', '))}</span>` : ''}
     </div>`;
 
   document.getElementById('raw-doctor-pre').textContent = JSON.stringify(d, null, 2);

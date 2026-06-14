@@ -1,5 +1,11 @@
 // LiverLink - Hackathon Demo Simulation Logic
 
+// Escape user/AI/API-controlled values before interpolating into innerHTML.
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 // ==========================================
 // 1. Initial State & Data Definitions
 // ==========================================
@@ -398,13 +404,13 @@ function renderPatientDashboard(patient) {
     item.className = `reminder-item ${reminder.completed ? 'completed' : ''}`;
     item.innerHTML = `
       <div class="reminder-info">
-        <span class="reminder-time">${reminder.time}</span>
+        <span class="reminder-time">${escapeHTML(reminder.time)}</span>
         <div class="reminder-med-details">
-          <strong class="reminder-name">${reminder.name}</strong>
+          <strong class="reminder-name">${escapeHTML(reminder.name)}</strong>
           <span class="reminder-dosage">Status: ${reminder.completed ? 'Taken' : 'Awaiting confirmation'}</span>
         </div>
       </div>
-      <button class="btn-checkbox" onclick="toggleReminder('${reminder.id}')" aria-label="Toggle reminder">
+      <button class="btn-checkbox" onclick="toggleReminder('${escapeHTML(reminder.id)}')" aria-label="Toggle reminder">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
@@ -442,7 +448,7 @@ function renderAgentLogs() {
   state.agentLogs.forEach(log => {
     const item = document.createElement('div');
     item.className = `agent-log-item ${log.type}`;
-    item.innerHTML = `<span class="timestamp">[${log.timestamp}]</span> ${log.text}`;
+    item.innerHTML = `<span class="timestamp">[${escapeHTML(log.timestamp)}]</span> ${escapeHTML(log.text)}`;
     container.appendChild(item);
   });
   
@@ -466,12 +472,12 @@ function renderDoctorDashboard(patient) {
   [...patient.biochemistry].reverse().forEach(record => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${record.date}</td>
-      <td class="${record.alt > 35 ? 'text-danger' : 'text-success'}">${record.alt} U/L</td>
-      <td class="${record.ast > 40 ? 'text-danger' : 'text-success'}">${record.ast} U/L</td>
-      <td class="${record.bilirubin > 1.2 ? 'text-danger' : 'text-success'}">${record.bilirubin} mg/dL</td>
-      <td>${record.orderedBy}</td>
-      <td><span class="badge ${record.status === 'Completed' ? 'badge-success' : 'badge-warning'}">${record.status}</span></td>
+      <td>${escapeHTML(record.date)}</td>
+      <td class="${record.alt > 35 ? 'text-danger' : 'text-success'}">${escapeHTML(record.alt)} U/L</td>
+      <td class="${record.ast > 40 ? 'text-danger' : 'text-success'}">${escapeHTML(record.ast)} U/L</td>
+      <td class="${record.bilirubin > 1.2 ? 'text-danger' : 'text-success'}">${escapeHTML(record.bilirubin)} mg/dL</td>
+      <td>${escapeHTML(record.orderedBy)}</td>
+      <td><span class="badge ${record.status === 'Completed' ? 'badge-success' : 'badge-warning'}">${escapeHTML(record.status)}</span></td>
     `;
     tbody.appendChild(tr);
   });
@@ -649,16 +655,16 @@ function renderLabDashboard() {
 
   state.labOrders.forEach(order => {
     const tr = document.createElement('tr');
-    const actionBtn = order.status === 'Pending' 
-      ? `<button class="btn btn-small btn-primary" onclick="simulateLabAnalysis('${order.id}')">🔬 Process Sample</button>`
+    const actionBtn = order.status === 'Pending'
+      ? `<button class="btn btn-small btn-primary" onclick="simulateLabAnalysis('${escapeHTML(order.id)}')">🔬 Process Sample</button>`
       : `<span class="text-success">Processed</span>`;
-      
+
     tr.innerHTML = `
-      <td><strong>${order.id}</strong></td>
-      <td>${order.patient}</td>
-      <td>${order.panel}</td>
-      <td>${order.date}</td>
-      <td><span class="badge ${order.status === 'Pending' ? 'badge-purple' : 'badge-success'}">${order.status}</span></td>
+      <td><strong>${escapeHTML(order.id)}</strong></td>
+      <td>${escapeHTML(order.patient)}</td>
+      <td>${escapeHTML(order.panel)}</td>
+      <td>${escapeHTML(order.date)}</td>
+      <td><span class="badge ${order.status === 'Pending' ? 'badge-purple' : 'badge-success'}">${escapeHTML(order.status)}</span></td>
       <td>${actionBtn}</td>
     `;
     tbody.appendChild(tr);
@@ -910,8 +916,10 @@ async function fetchMorningBriefing() {
     if (data.articles && data.articles.length > 0) {
       data.articles.forEach(art => {
         const a = document.createElement('a');
-        a.href = art.url;
+        // Only allow http(s) links; ignore javascript:/data: and other schemes.
+        a.href = /^https?:\/\//i.test(art.url) ? art.url : '#';
         a.target = '_blank';
+        a.rel = 'noopener noreferrer';
         a.style.display = 'block';
         a.style.fontSize = '11px';
         a.style.color = 'var(--accent-cyan)';
@@ -919,7 +927,7 @@ async function fetchMorningBriefing() {
         a.style.borderBottom = '1px dashed rgba(6,182,212,0.15)';
         a.style.paddingBottom = '4px';
         a.style.marginBottom = '2px';
-        a.innerHTML = `<strong>🔗 ${art.title}</strong><br><span style="color: var(--color-text-secondary); font-size: 10px;">${art.snippet.substring(0, 80)}...</span>`;
+        a.innerHTML = `<strong>🔗 ${escapeHTML(art.title)}</strong><br><span style="color: var(--color-text-secondary); font-size: 10px;">${escapeHTML(String(art.snippet ?? '').substring(0, 80))}...</span>`;
         linksEl.appendChild(a);
       });
     } else {
@@ -1459,36 +1467,42 @@ function appendChatBubble(sender, authorLabel, text) {
   // Extract custom [VIDEO_EMBED:url] tag if present
   let cleanText = text;
   let videoEmbedHtml = '';
-  
+
   const videoMatch = text.match(/\[VIDEO_EMBED:([^\]]+)\]/);
   if (videoMatch) {
-    const embedUrl = videoMatch[1].trim();
     cleanText = text.replace(/\[VIDEO_EMBED:[^\]]+\]/, '');
-    videoEmbedHtml = `
-      <div class="video-container" style="margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 15px rgba(0,0,0,0.3); background-color: #000; width: 100%;">
-        <iframe width="100%" height="180" src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="display: block;"></iframe>
-      </div>
-    `;
+    const embedUrl = videoMatch[1].trim();
+    // Only embed validated YouTube URLs — never an arbitrary attacker-supplied src.
+    if (/^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\/embed\/[A-Za-z0-9_-]+(\?[A-Za-z0-9_=&%.-]*)?$/.test(embedUrl)) {
+      videoEmbedHtml = `
+        <div class="video-container" style="margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 15px rgba(0,0,0,0.3); background-color: #000; width: 100%;">
+          <iframe width="100%" height="180" src="${escapeHTML(embedUrl)}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="display: block;"></iframe>
+        </div>
+      `;
+    }
   }
-  
+
+  // Escape the raw message BEFORE applying markdown so injected HTML can't execute.
+  // The markdown chars (*, [, ], (, )) aren't escaped, so the transforms below still work.
+  cleanText = escapeHTML(cleanText);
+
   // 1. Process bold text **bold**
   cleanText = cleanText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  
+
   // 2. Process italic text *italic*
   cleanText = cleanText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  
-  // 3. Process markdown links [Text](URL) and convert them to styled action buttons
+
+  // 3. Process markdown links [Text](URL) into safe http(s) links only.
+  //    Non-http(s) schemes (e.g. javascript:) are dropped to plain text.
   cleanText = cleanText.replace(/\[([^\]]+)\]\(((?:[^()]+|\([^()]*\))+)\)/g, (match, label, url) => {
-    if (url.startsWith("javascript:")) {
-      const jsCode = url.substring("javascript:".length);
-      return `<button onclick="${jsCode}; return false;" class="chat-action-btn">${label}</button>`;
-    } else {
-      return `<a href="${url}" target="_blank" class="chat-action-btn">${label}</a>`;
+    if (/^https?:\/\//i.test(url)) {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-action-btn">${label}</a>`;
     }
+    return label;
   });
-  
+
   bubble.innerHTML = `
-    <strong>${authorLabel}</strong>
+    <strong>${escapeHTML(authorLabel)}</strong>
     <p>${cleanText}</p>
     ${videoEmbedHtml}
   `;
@@ -1600,10 +1614,10 @@ async function fetchAndRenderHealthLogsTable() {
       }
       
       tr.innerHTML = `
-        <td style="font-weight: 500;">${dateStr}</td>
-        <td><span style="font-size: 14px; margin-right: 6px;">${emoji}</span> <strong>${paramLabel}</strong></td>
-        <td style="color: var(--color-text-secondary); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${valText}</td>
-        <td><span class="badge ${badgeClass}">${badgeLabel}</span></td>
+        <td style="font-weight: 500;">${escapeHTML(dateStr)}</td>
+        <td><span style="font-size: 14px; margin-right: 6px;">${escapeHTML(emoji)}</span> <strong>${escapeHTML(paramLabel)}</strong></td>
+        <td style="color: var(--color-text-secondary); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(valText)}</td>
+        <td><span class="badge ${badgeClass}">${escapeHTML(badgeLabel)}</span></td>
       `;
       tbody.appendChild(tr);
     });

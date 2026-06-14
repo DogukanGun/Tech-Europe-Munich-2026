@@ -1,4 +1,7 @@
 fastapi>=0.110
+# Pin starlette to a patched release (CVE-2026-48710). Floor raised at verification
+# time to whatever the clean install resolves to; fastapi follows along.
+starlette>=1.0.1
 uvicorn[standard]>=0.27
 httpx>=0.27
 pydantic>=2.6
