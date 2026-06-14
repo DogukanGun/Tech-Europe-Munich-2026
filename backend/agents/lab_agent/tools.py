@@ -29,3 +29,46 @@ def fetch_patient_history(patient_id: str) -> dict:
         return {"patient_id": patient_id, "count": len(records), "records": records}
     except Exception:
         return {"patient_id": patient_id, "count": 0, "records": []}
+
+
+def queue_priority_emergency_blood_test(patient_id: str = "patient_john_doe") -> dict:
+    """
+    Queue a priority emergency blood draw and panel (Serum Ammonia, repeat LFTs)
+    in the diagnostic lab system for when the patient arrives via ambulance.
+
+    Args:
+        patient_id: The patient identifier.
+
+    Returns:
+        dict: Diagnostic lab queue status and queued tests.
+    """
+    from datetime import datetime, timezone
+    from shared.db import get_db
+    
+    queue_record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "patient_id": patient_id,
+        "queued_tests": ["Serum Ammonia", "Repeat LFT Panel (ALT, AST, ALP, Albumin, Total Bilirubin)", "Renal Panel", "Coagulation Panel (PT/INR)"],
+        "priority_level": "STAT (Emergency)",
+        "lab_status": "Pre-notified & Waiting for Specimen"
+    }
+    
+    try:
+        db = get_db()
+        db.health_logs.insert_one({
+            "patient_id": patient_id,
+            "event": "lab_priority_queue",
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "timestamp": datetime.now(timezone.utc),
+            "data": queue_record
+        })
+    except Exception as db_err:
+        print(f"[DB WRITE ERROR] {db_err}")
+        
+    return {
+        "status": "success",
+        "priority_level": "STAT",
+        "lab_queue_status": "QUEUED",
+        "tests": queue_record["queued_tests"],
+        "details": queue_record
+    }

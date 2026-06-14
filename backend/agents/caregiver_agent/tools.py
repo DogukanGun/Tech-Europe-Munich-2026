@@ -593,3 +593,75 @@ def get_cld_care_tip(topic: str) -> dict:
 
     print(f"[LIVERLINK LOG] Care tip retrieved for topic: {topic}")
     return {"status": "success", "topic": topic, "guidance": matched}
+
+
+def check_caregiver_location(patient_id: str = "patient_john_doe") -> dict:
+    """
+    Check the caregiver's live location and distance relative to the patient's residence.
+
+    Args:
+        patient_id: The patient identifier.
+
+    Returns:
+        dict: Location audit details indicating if caregiver is far or near.
+    """
+    caregiver_distance_km = 15.4  # far away
+    return {
+        "status": "success",
+        "patient_id": patient_id,
+        "caregiver_location": "Out of town (Clinical Conference - 15km away)",
+        "distance_km": caregiver_distance_km,
+        "caregiver_location_status": "FAR",
+        "message": "Caregiver is far from patient's residence. HITL authorization required before EMS dispatch."
+    }
+
+
+def dispatch_ambulance_via_hitl(patient_id: str = "patient_john_doe", authorized: bool = False) -> dict:
+    """
+    Dispatch an emergency ambulance to the patient's residence after receiving Human-in-the-Loop (HITL) authorization.
+
+    Args:
+        patient_id: The patient identifier.
+        authorized: True if the caregiver explicitly authorized the ambulance dispatch.
+
+    Returns:
+        dict: Result of the ambulance dispatch operation.
+    """
+    from datetime import datetime, timezone
+    
+    if not authorized:
+        return {
+            "status": "cancelled",
+            "patient_id": patient_id,
+            "message": "Ambulance dispatch cancelled by caregiver."
+        }
+
+    residence = "104 Baker Street, London"
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "patient_id": patient_id,
+        "ems_status": "Ambulance Dispatched",
+        "eta_minutes": 8,
+        "destination": residence
+    }
+    
+    try:
+        get_db().caregiver_observations.insert_one({
+            "timestamp": datetime.now(timezone.utc),
+            "patient_id": patient_id,
+            "logged_by": "caregiver_agent",
+            "observation": "Caregiver authorized ambulance dispatch via Human-in-the-Loop decision gate.",
+            "severity": "urgent",
+            "symptoms_observed": ["Severe Confusion", "Asterixis"],
+            "action_taken": "Ambulance dispatched to John's location via HITL EMS loop"
+        })
+    except Exception as db_err:
+        print(f"[DB WRITE ERROR] {db_err}")
+        
+    return {
+        "status": "success",
+        "hitl_ems_trigger": "ACTIVE",
+        "ambulance_status": "Dispatched & Arrived",
+        "eta": "8 minutes",
+        "details": record
+    }

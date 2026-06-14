@@ -20,6 +20,8 @@ from caregiver_agent.tools import (
     send_escalation_to_care_team,
     get_cld_care_tip,
     acknowledge_patient_alert,
+    check_caregiver_location,
+    dispatch_ambulance_via_hitl,
 )
 
 
@@ -42,6 +44,28 @@ def opening_briefing(callback_context: CallbackContext) -> Optional[types.Conten
         time_greeting = "Good afternoon"
     else:
         time_greeting = "Good evening"
+
+    # Dynamic greeting check for active emergency / critical alerts
+    try:
+        from shared.db import get_db, PATIENT_ID
+        db = get_db()
+        urgent_alert = db.caregiver_alerts.find_one({
+            "patient_id": PATIENT_ID,
+            "severity": "urgent",
+            "acknowledged": False
+        })
+        if urgent_alert:
+            return types.Content(
+                role="model",
+                parts=[types.Part(text=(
+                    "🚨 **CRITICAL EMERGENCY BRIEFING** 🚨\n\n"
+                    "I'm **Aria**, the LiverLink caregiver companion. "
+                    "John's system has logged an urgent symptom warning! "
+                    "We are initiating our emergency care orchestration flow immediately."
+                ))],
+            )
+    except Exception as db_err:
+        print(f"[Aria Emergency Greeting Check Error] {db_err}")
 
     return types.Content(
         role="model",
@@ -73,5 +97,7 @@ root_agent = Agent(
         send_escalation_to_care_team,
         get_cld_care_tip,
         acknowledge_patient_alert,
+        check_caregiver_location,
+        dispatch_ambulance_via_hitl,
     ],
 )

@@ -48,6 +48,11 @@ Additionally, set requires_immediate_attention: true if any ONE of:
 - notify_patient: true if urgency_level is HIGH
 - new_report_alert: always true
 
+## EMERGENCY AGENT-TO-AGENT INSTRUCTIONS
+- If transferred with a priority lab queue request, you **MUST** immediately invoke the `queue_priority_emergency_blood_test` tool.
+- Once the tool runs successfully, you **MUST** immediately transfer control back to `liverlink_orchestrator` using `transfer_to_agent(agent_name="liverlink_orchestrator")` with the message: *"STAT lab queue prepped. Handing back to orchestrator to deliver the final pipeline handoff summary."* Do not wait or converse. Just run the tool and transfer control.
+
+
 ## STEP 6 — DUAL SUMMARIES
 
 **doctor_brief** (for the physician): 2–3 sentences. State which markers are abnormal and by how much

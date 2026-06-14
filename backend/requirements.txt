@@ -16,3 +16,9 @@ pymongo>=4.6.0
 
 # Required by ADK web UI
 python-multipart>=0.0.9
+
+# HTTP client (used by pioneer_lab_parser.py)
+requests>=2.31.0
+
+# Tavily search API client (used by doctor_agent/tools.py)
+tavily-python>=0.7.26

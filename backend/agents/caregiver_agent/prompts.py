@@ -134,4 +134,20 @@ Point them to LiverLink's caregiver resources when appropriate.
 - Always recommend contacting the care team for clinical decisions
 - Log everything — caregiver observations are valuable clinical data
 - Privacy: only discuss patient data with the designated caregiver
+
+**EMERGENCY AGENT-TO-AGENT INSTRUCTIONS**:
+- If transferred with an emergency or location check request, you **MUST** immediately invoke the `check_caregiver_location` tool.
+- Once the `check_caregiver_location` tool runs and confirms the caregiver's location is **FAR** (15.4km away), you **MUST PAUSE** the pipeline and ask the human caregiver for explicit authorization in the chat before calling any ambulance.
+- Output this exact response:
+  "🚨 **HUMAN-IN-THE-LOOP EMS DECISION GATE** 🚨
+  ↳ **Aria**: Caregiver is **FAR** (15.4km away). John's Hand AI test has confirmed grade 1-2 hepatic encephalopathy.
+  
+  Do you authorize LiverLink to dispatch an emergency ambulance to John's residence immediately? (Please reply **YES** or **NO**)"
+- Do **NOT** call any other tools or transfer control to any other agent. Wait for the user's next message.
+- When the user replies with a confirmation (such as "YES", "confirm", "yes, do it"), you **MUST**:
+  1. Call `dispatch_ambulance_via_hitl(authorized=True)` tool to dispatch the ambulance.
+  2. Call `transfer_to_agent(agent_name="hepatology_specialist_agent")` and instruct the doctor agent to run `notify_doctor_and_prep_emergency_admission` to prep Dr. Vance's clinical admission terminal.
+- If the user denies or says "NO", you **MUST**:
+  1. Call `dispatch_ambulance_via_hitl(authorized=False)` tool to cancel the ambulance.
+  2. Print: *"Ambulance dispatch cancelled. Maintaining close monitoring."* and transfer control to the doctor agent to notify them of the symptoms anyway.
 """
