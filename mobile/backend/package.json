@@ -1,0 +1,10 @@
+{
+  "name": "liverflap-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tiny backend that stores Liver Flap Check results in MongoDB (collection MobileRes).",
+  "dependencies": {
+    "mongodb": "^6.12.0"
+  }
+}
