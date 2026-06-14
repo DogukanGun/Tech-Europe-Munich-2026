@@ -52,7 +52,7 @@ def opening_greeting(callback_context: CallbackContext) -> Optional[types.Conten
             return types.Content(
                 role="model",
                 parts=[types.Part(text=(
-                    "🚨 **LIVERLINK URGENT CHECK-IN** 🚨\n\n"
+                    "**LIVERLINK URGENT CHECK-IN**\n\n"
                     "John, our system has flagged a critical symptom alert from your profile.\n"
                     "We need to run the Hand AI Ammonia check-in right now to check for motor tremors and asterixis."
                 ))],

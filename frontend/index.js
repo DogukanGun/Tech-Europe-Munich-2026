@@ -569,7 +569,7 @@ function renderDoctorDashboard(patient) {
   if (patient.name === "Sarah Connor") {
     recTitle = "CT Recommended (LI-RADS Surveillance)";
     recDesc = `NAFLD Stage 3 with advanced fibrosis requires contrast-enhanced CT scan for Hepatocellular Carcinoma (HCC) risk screening.
-               <button id="btn-invoke-ct" class="btn btn-warning btn-block" style="margin-top: 10px; font-size: 11px; padding: 6px; font-weight: bold; cursor: pointer; border-radius: 4px;" onclick="invokeCTScanForSarah()">🚨 Invoke CT Recommendation</button>`;
+               <button id="btn-invoke-ct" class="btn btn-warning btn-block" style="margin-top: 10px; font-size: 11px; padding: 6px; font-weight: bold; cursor: pointer; border-radius: 4px;" onclick="invokeCTScanForSarah()">⚠️ Invoke CT Recommendation</button>`;
     severityLabel = "SURVEILLANCE DUE";
     severityColor = "rgba(234, 88, 12, 0.2)";
     textAccent = "#ea580c";

@@ -397,7 +397,7 @@
   <h2>🧪 Lab Agent — Report Analysis</h2>
 
   <div id="urgency-badge-wrap"></div>
-  <div id="immediate-alert" style="display:none" class="alert-banner">🚨 Requires Immediate Attention — contact physician now</div>
+  <div id="immediate-alert" style="display:none" class="alert-banner">Requires Immediate Attention — contact physician now</div>
   <div id="notif-wrap" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
   <div id="alert-msg-wrap" style="font-size:0.82rem;color:#d29922;margin-bottom:14px;"></div>
 
@@ -743,7 +743,7 @@ function renderDoctor(d) {
   document.getElementById('doctor-badge-wrap').innerHTML =
     `<span class="urgency-badge urgency-${ul}" style="margin-bottom:8px;display:inline-block;">⚠ ${ul}</span>`
     + (d.requires_immediate_attention
-      ? `<div class="alert-banner" style="margin-bottom:12px;">🚨 Requires Immediate Attention</div>`
+      ? `<div class="alert-banner" style="margin-bottom:12px;">Requires Immediate Attention</div>`
       : '');
 
   document.getElementById('doctor-summary').textContent = d.doctor_summary || '—';

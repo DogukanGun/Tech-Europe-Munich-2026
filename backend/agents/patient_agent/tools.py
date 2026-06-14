@@ -192,7 +192,7 @@ def run_hand_ai_ammonia_test() -> dict:
         tg_url = "http://localhost:8001/send"
         payload = {
             "patient_id": PATIENT_ID,
-            "text": "🚨 URGENT: John, please complete your Hand AI ocular and micro-tremor scan immediately in the LiverLink app.",
+            "text": "URGENT: John, please complete your Hand AI ocular and micro-tremor scan immediately in the LiverLink app.",
             "from_agent": "patient_agent_agent",
             "open_app": True,
             "deeplink_path": "handtest?patient=patient_john_doe"

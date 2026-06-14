@@ -58,7 +58,7 @@ def opening_briefing(callback_context: CallbackContext) -> Optional[types.Conten
             return types.Content(
                 role="model",
                 parts=[types.Part(text=(
-                    "🚨 **CRITICAL EMERGENCY BRIEFING** 🚨\n\n"
+                    "**CRITICAL EMERGENCY BRIEFING**\n\n"
                     "I'm **Aria**, the LiverLink caregiver companion. "
                     "John's system has logged an urgent symptom warning! "
                     "We are initiating our emergency care orchestration flow immediately."
