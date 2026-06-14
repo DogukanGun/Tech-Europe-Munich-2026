@@ -15,7 +15,7 @@ python-dotenv>=1.0.0
 pymongo>=4.6.0
 
 # Required by ADK web UI
-python-multipart>=0.0.9
+python-multipart>=0.0.22
 
 # HTTP client (used by pioneer_lab_parser.py)
 requests>=2.31.0
